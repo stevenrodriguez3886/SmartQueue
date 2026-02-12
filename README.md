@@ -1,5 +1,5 @@
 TEAM MEMBERS:
-Steven Rodriguez
+Steven Rodriguez, Joel Plew
 
 Many small to medium sized services such as clinics, offices, and government service centers all had struggle with long wait times, overcrowded waiting areas, and inefficient appointment management.
 Customers often arrive without knowing how long they might have to wait, which could lead to frustration from the customer or missed appointments.
