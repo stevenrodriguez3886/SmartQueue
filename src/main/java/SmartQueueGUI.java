@@ -8,10 +8,25 @@
  *
  * @author alejandrodominguez
  */
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.table.DefaultTableModel;
 
 public class SmartQueueGUI extends JFrame {
 
@@ -57,8 +72,8 @@ public class SmartQueueGUI extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel nameLabel = new JLabel("Customer Name:");
-        JLabel dateLabel = new JLabel("Date (YYYY-MM-DD):");
-        JLabel hourLabel = new JLabel("Hour:");
+        JLabel dateLabel = new JLabel("Appointment Date (YYYY-MM-DD):");
+        JLabel hourLabel = new JLabel("Start Hour:");
 
         nameField = new JTextField(20);
         dateField = new JTextField(12);
