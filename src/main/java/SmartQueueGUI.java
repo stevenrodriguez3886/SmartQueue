@@ -148,6 +148,11 @@ public class SmartQueueGUI extends JFrame {
             return;
         }
 
+        if (date.compareTo(java.time.LocalDate.now().toString()) < 0) {
+            showError("Please enter a future date. Past dates are not allowed.");
+            return;
+        }
+
         if (hour == null || hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
             showError("Please choose a valid hour between " + OPEN_HOUR + ":00 and " + (CLOSE_HOUR - 1) + ":00.");
             return;
