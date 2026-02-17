@@ -1,4 +1,7 @@
 import java.awt.GridLayout;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -66,9 +69,46 @@ public class CustomerDashboard extends JFrame {
             return;
         }
 
-        if (date.compareTo(java.time.LocalDate.now().toString()) < 0) {
+        LocalDate now = LocalDate.now();
+        LocalDate dateObj;
+        try {
+            dateObj = LocalDate.parse(date);
+        } catch (DateTimeParseException ex) {
+            showError("Please enter a valid date in YYYY-MM-DD format.");
+            return;
+        }
+
+        if (dateObj.isBefore(now)) {
             showError("Please enter a future date. Past dates are not allowed.");
             return;
+        }
+
+        // New validations
+        // 1) Name must not contain digits
+        if (name.matches(".*\\d.*")) {
+            showError("Name must not contain numbers.");
+            return;
+        }
+
+        // 2) Date must be within next 1 year
+        if (dateObj.isAfter(now.plusYears(1))) {
+            showError("Please choose a date within the next year.");
+            return;
+        }
+
+        // 3) Disallow weekends
+        DayOfWeek dow = dateObj.getDayOfWeek();
+        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
+            showError("Appointments cannot be scheduled on weekends.");
+            return;
+        }
+
+        // 4) Prevent duplicate customer name on the same date
+        for (Appointment a : appointments) {
+            if (a.date.equals(date) && a.name.equalsIgnoreCase(name)) {
+                showError("An appointment for this customer already exists on " + date + ".");
+                return;
+            }
         }
 
         if (hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
