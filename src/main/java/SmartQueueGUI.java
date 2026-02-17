@@ -13,6 +13,9 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -25,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 
@@ -57,11 +61,41 @@ public class SmartQueueGUI extends JFrame {
 
     // Service hours (9AM - 5PM; last bookable start hour is 16)
     private static final int OPEN_HOUR = 9;
-    private static final int CLOSE_HOUR = 17;
+    private static final int CLOSE_HOUR = 23;
 
     public SmartQueueGUI() {
         super("SmartQueue - Appointment Booking");
         initUI();
+        startExpiryTimer();
+    }
+
+    private void startExpiryTimer() {
+        // Run an immediate cleanup then schedule periodic checks every minute
+        checkExpiredAppointments();
+        Timer timer = new Timer(60_000, e -> checkExpiredAppointments());
+        timer.setInitialDelay(60_000);
+        timer.start();
+    }
+
+    private void checkExpiredAppointments() {
+        LocalDateTime now = LocalDateTime.now();
+
+        // Iterate backwards to safely remove by index
+        for (int i = appointments.size() - 1; i >= 0; i--) {
+            Appointment a = appointments.get(i);
+            try {
+                LocalDate apptDate = LocalDate.parse(a.date);
+                LocalTime endTime = LocalTime.of(a.hour + 1, 0); // slot ends one hour after start
+                LocalDateTime endDateTime = LocalDateTime.of(apptDate, endTime);
+                
+                if (!now.isBefore(endDateTime)) { // now >= endDateTime
+                    appointments.remove(i);
+                    tableModel.removeRow(i);
+                }
+            } catch (Exception ex) {
+                // ignore malformed dates and leave those appointments unchanged
+            }
+        }
     }
 
     private void initUI() {
