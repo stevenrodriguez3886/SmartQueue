@@ -24,6 +24,7 @@ public class CustomerDashboard extends JFrame {
     private JTextField dateField;
     private JComboBox<Integer> hourCombo;
     private JButton bookButton;
+    private JButton waitTimeButton;
 
     public CustomerDashboard(ArrayList<Appointment> list, EmployeeDashboard staff) {
         super("Customer Booking Station");
@@ -36,17 +37,21 @@ public class CustomerDashboard extends JFrame {
         setLayout(new GridLayout(4, 2, 10, 10));
 
         nameField = new JTextField();
-        dateField = new JTextField("2025-01-01");
+        dateField = new JTextField(LocalDate.now().toString());
         hourCombo = new JComboBox<>();
         for (int i = 9; i <= 16; i++) hourCombo.addItem(i);
 
         bookButton = new JButton("Book Appointment");
         bookButton.addActionListener(e -> book());
 
+        waitTimeButton = new JButton("View Estimated Wait Time");
+        waitTimeButton.addActionListener(e -> showWaitTime());
+
         add(new JLabel("Name:")); add(nameField);
         add(new JLabel("Appointment Date (YYYY-MM-DD):")); add(dateField);
         add(new JLabel("Start Hour:")); add(hourCombo);
-        add(new JLabel("")); add(bookButton); // Empty label for spacing
+        add(waitTimeButton); add(bookButton); // Empty label for spacing
+        //add(new JLabel("")); add(waitTimeButton); // Empty label for spacing
 
         setSize(400, 200);
         setLocation(100, 100);
@@ -132,6 +137,32 @@ public class CustomerDashboard extends JFrame {
         
         JOptionPane.showMessageDialog(this, "Appointment Booked!");
         nameField.setText("");
+    }
+
+    private void showWaitTime() {
+        String date = dateField.getText();
+        int hour = (int) hourCombo.getSelectedItem();
+
+        LocalDate now = LocalDate.now();
+        LocalDate dateObj;
+        try {
+            dateObj = LocalDate.parse(date);
+        } catch (DateTimeParseException ex) {
+            showError("Please enter a valid date in YYYY-MM-DD format.");
+            return;
+        }
+
+        int waitCount = 0;
+        for (Appointment a : appointments) {
+            if (a.date.equals(date) && a.hour < hour) {
+                waitCount++;
+            }
+        }
+
+        // Dynamically get appointment duration from staff view
+        int durationMinutes = staffView.getAppointmentDurationMinutes();
+        int estimatedWaitMinutes = waitCount * durationMinutes;
+        JOptionPane.showMessageDialog(this, "Estimated Wait Time: " + estimatedWaitMinutes + " minutes. There are: " + waitCount + " users ahead of you for " + date + " at " + formatHour(hour) + ".");
     }
 
     private void showError(String message) {
