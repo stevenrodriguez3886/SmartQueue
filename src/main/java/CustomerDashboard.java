@@ -1,9 +1,21 @@
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GridLayout;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+
 public class CustomerDashboard extends JFrame {
+
+    private static final int OPEN_HOUR = 9;
+    private static final int CLOSE_HOUR = 17;
 
     private ArrayList<Appointment> appointments;
     private EmployeeDashboard staffView;
@@ -32,8 +44,8 @@ public class CustomerDashboard extends JFrame {
         bookButton.addActionListener(e -> book());
 
         add(new JLabel("Name:")); add(nameField);
-        add(new JLabel("Date (YYYY-MM-DD):")); add(dateField);
-        add(new JLabel("Hour:")); add(hourCombo);
+        add(new JLabel("Appointment Date (YYYY-MM-DD):")); add(dateField);
+        add(new JLabel("Start Hour:")); add(hourCombo);
         add(new JLabel("")); add(bookButton); // Empty label for spacing
 
         setSize(400, 200);
@@ -46,7 +58,68 @@ public class CustomerDashboard extends JFrame {
         String date = dateField.getText();
         int hour = (int) hourCombo.getSelectedItem();
 
-        if (name.isEmpty()) return;
+        // Basic validations
+        if (name.isEmpty()) {
+            showError("Please enter a customer name.");
+            return;
+        }
+
+        if (!isValidDateFormat(date)) {
+            showError("Please enter a valid date in YYYY-MM-DD format.");
+            return;
+        }
+
+        LocalDate now = LocalDate.now();
+        LocalDate dateObj;
+        try {
+            dateObj = LocalDate.parse(date);
+        } catch (DateTimeParseException ex) {
+            showError("Please enter a valid date in YYYY-MM-DD format.");
+            return;
+        }
+
+        if (dateObj.isBefore(now)) {
+            showError("Please enter a future date. Past dates are not allowed.");
+            return;
+        }
+
+        // New validations
+        // 1) Name must not contain digits
+        if (name.matches(".*\\d.*")) {
+            showError("Name must not contain numbers.");
+            return;
+        }
+
+        // 2) Date must be within next 1 year
+        if (dateObj.isAfter(now.plusYears(1))) {
+            showError("Please choose a date within the next year.");
+            return;
+        }
+
+        // 3) Disallow weekends
+        DayOfWeek dow = dateObj.getDayOfWeek();
+        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
+            showError("Appointments cannot be scheduled on weekends.");
+            return;
+        }
+
+        // 4) Prevent duplicate customer name on the same date
+        for (Appointment a : appointments) {
+            if (a.date.equals(date) && a.name.equalsIgnoreCase(name)) {
+                showError("An appointment for this customer already exists on " + date + ".");
+                return;
+            }
+        }
+
+        if (hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
+            showError("Please choose a valid hour between " + OPEN_HOUR + ":00 and " + (CLOSE_HOUR - 1) + ":00.");
+            return;
+        }
+
+        if (isSlotTaken(date, hour)) {
+            showError("This time slot is already taken for " + date + " at " + formatHour(hour) + ".");
+            return;
+        }
 
         appointments.add(new Appointment(name, date, hour));
         
@@ -59,5 +132,29 @@ public class CustomerDashboard extends JFrame {
         
         JOptionPane.showMessageDialog(this, "Appointment Booked!");
         nameField.setText("");
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private boolean isValidDateFormat(String date) {
+        if (date == null || date.isEmpty()) {
+            return false;
+        }
+        return date.matches("\\d{4}-\\d{2}-\\d{2}");
+    }
+
+    private boolean isSlotTaken(String date, int hour) {
+        for (Appointment a : appointments) {
+            if (a.date.equals(date) && a.hour == hour) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String formatHour(int hour) {
+        return String.format("%02d:00", hour);
     }
 }
