@@ -26,6 +26,7 @@ public class CustomerDashboard extends JFrame {
     private JButton bookButton;
     private JButton waitTimeButton;
     private JButton viewPositionInQueueButton;
+    private JButton cancelButton;
     private EmployeeDashboard custWaitListView; // To hold the reference to the restricted view
 
     public CustomerDashboard(ArrayList<Appointment> list, EmployeeDashboard staff) {
@@ -37,7 +38,7 @@ public class CustomerDashboard extends JFrame {
     }
 
     private void initUI(ArrayList<Appointment> list) {
-        setLayout(new GridLayout(5, 2, 10, 10));
+        setLayout(new GridLayout(6, 2, 10, 10));
 
         nameField = new JTextField();
         dateField = new JTextField(LocalDate.now().toString());
@@ -53,13 +54,16 @@ public class CustomerDashboard extends JFrame {
         viewPositionInQueueButton = new JButton("View Position in Queue");
         viewPositionInQueueButton.addActionListener(e -> showPositionInQueue());
 
+        cancelButton = new JButton("Cancel Appointment");
+        cancelButton.addActionListener(e -> cancelAppointment());
+
         add(new JLabel("Name:")); add(nameField);
         add(new JLabel("Appointment Date (YYYY-MM-DD):")); add(dateField);
         add(new JLabel("Start Hour:")); add(hourCombo);
-        add(waitTimeButton); add(bookButton); // Empty label for spacing
-        add(new JLabel("")); add(viewPositionInQueueButton); // Empty label for spacing
+        add(waitTimeButton); add(bookButton); 
+        add(cancelButton); add(viewPositionInQueueButton); 
 
-        setSize(400, 200);
+        setSize(400, 230); // Slightly increased height for the new row
         setLocation(100, 100);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
@@ -144,6 +148,35 @@ public class CustomerDashboard extends JFrame {
         
         JOptionPane.showMessageDialog(this, "Appointment Booked!");
         nameField.setText("");
+    }
+
+    private void cancelAppointment() {
+        String name = nameField.getText();
+        String date = dateField.getText();
+        int hour = (int) hourCombo.getSelectedItem();
+
+        // Basic validation
+        if (name.isEmpty()) {
+            showError("Please enter the name on the appointment to cancel.");
+            return;
+        }
+
+        // Attempt to remove the appointment
+        boolean removed = appointments.removeIf(a -> 
+            a.name.equalsIgnoreCase(name) && 
+            a.date.equals(date) && 
+            a.hour == hour
+        );
+
+        // Notify the staff view and customer view to update their tables if an appointment was removed
+        if (removed) {
+            staffView.refreshTable();
+            custWaitListView.refreshTable();
+            JOptionPane.showMessageDialog(this, "Appointment successfully canceled.");
+            nameField.setText("");
+        } else {
+            showError("No matching appointment found to cancel.");
+        }
     }
 
     private void showWaitTime() {
