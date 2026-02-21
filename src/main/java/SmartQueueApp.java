@@ -1,5 +1,6 @@
-import javax.swing.*;
 import java.util.ArrayList;
+
+import javax.swing.SwingUtilities;
 
 public class SmartQueueApp {
 
@@ -9,7 +10,7 @@ public class SmartQueueApp {
             ArrayList<Appointment> sharedList = new ArrayList<>();
 
             // 2. Create the Employee view first
-            EmployeeDashboard staff = new EmployeeDashboard(sharedList);
+            EmployeeDashboard staff = new EmployeeDashboard(sharedList, "Staff Dashboard");
             
             // 3. Create Customer view, passing the list and the staff view (for updates)
             CustomerDashboard customer = new CustomerDashboard(sharedList, staff);
