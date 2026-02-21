@@ -25,16 +25,19 @@ public class CustomerDashboard extends JFrame {
     private JComboBox<Integer> hourCombo;
     private JButton bookButton;
     private JButton waitTimeButton;
+    private JButton viewPositionInQueueButton;
+    private EmployeeDashboard custWaitListView; // To hold the reference to the restricted view
 
     public CustomerDashboard(ArrayList<Appointment> list, EmployeeDashboard staff) {
         super("Customer Booking Station");
         this.appointments = list;
         this.staffView = staff;
-        initUI();
+        this.custWaitListView = new restrictedView(appointments); // Initialize the restricted view with the shared list
+        initUI(list);
     }
 
-    private void initUI() {
-        setLayout(new GridLayout(4, 2, 10, 10));
+    private void initUI(ArrayList<Appointment> list) {
+        setLayout(new GridLayout(5, 2, 10, 10));
 
         nameField = new JTextField();
         dateField = new JTextField(LocalDate.now().toString());
@@ -47,11 +50,14 @@ public class CustomerDashboard extends JFrame {
         waitTimeButton = new JButton("View Estimated Wait Time");
         waitTimeButton.addActionListener(e -> showWaitTime());
 
+        viewPositionInQueueButton = new JButton("View Position in Queue");
+        viewPositionInQueueButton.addActionListener(e -> showPositionInQueue());
+
         add(new JLabel("Name:")); add(nameField);
         add(new JLabel("Appointment Date (YYYY-MM-DD):")); add(dateField);
         add(new JLabel("Start Hour:")); add(hourCombo);
         add(waitTimeButton); add(bookButton); // Empty label for spacing
-        //add(new JLabel("")); add(waitTimeButton); // Empty label for spacing
+        add(new JLabel("")); add(viewPositionInQueueButton); // Empty label for spacing
 
         setSize(400, 200);
         setLocation(100, 100);
@@ -134,6 +140,7 @@ public class CustomerDashboard extends JFrame {
 
         // Notify the staff view to update its table
         staffView.refreshTable();
+        custWaitListView.refreshTable();
         
         JOptionPane.showMessageDialog(this, "Appointment Booked!");
         nameField.setText("");
@@ -163,6 +170,13 @@ public class CustomerDashboard extends JFrame {
         int durationMinutes = staffView.getAppointmentDurationMinutes();
         int estimatedWaitMinutes = waitCount * durationMinutes;
         JOptionPane.showMessageDialog(this, "Estimated Wait Time: " + estimatedWaitMinutes + " minutes. There are: " + waitCount + " users ahead of you for " + date + " at " + formatHour(hour) + ".");
+    }
+
+    private void showPositionInQueue(){
+        if (!custWaitListView.isVisible()) {
+            // Create new instance of the EmployeeDashboard with restricted view and functionality
+            custWaitListView.setVisible(true);
+        }
     }
 
     private void showError(String message) {

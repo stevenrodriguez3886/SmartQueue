@@ -15,19 +15,19 @@ import javax.swing.table.DefaultTableModel;
 
 public class EmployeeDashboard extends JFrame {
 
-    private ArrayList<Appointment> appointments;
-    private DefaultTableModel tableModel;
-    private JButton serveButton;
-    private JSpinner durationSpinner;
-    private int appointmentDurationMinutes = 15; // default
+    protected ArrayList<Appointment> appointments;
+    protected DefaultTableModel tableModel;
+    protected JButton serveButton;
+    protected JSpinner durationSpinner;
+    protected int appointmentDurationMinutes = 15; // default
 
-    public EmployeeDashboard(ArrayList<Appointment> list) {
-        super("Staff Dashboard");
+    public EmployeeDashboard(ArrayList<Appointment> list, String title) {
+        super(title);
         this.appointments = list;
         initUI();
     }
 
-    private void initUI() {
+    protected void initUI() {
         tableModel = new DefaultTableModel(new Object[]{"Name", "Date", "Time"}, 0);
         JTable table = new JTable(tableModel);
         
@@ -71,5 +71,31 @@ public class EmployeeDashboard extends JFrame {
 
     public int getAppointmentDurationMinutes() {
         return appointmentDurationMinutes;
+    }
+}
+
+class restrictedView extends EmployeeDashboard {
+  
+    public restrictedView(ArrayList<Appointment> list) {
+        super(list, "Your Position in Queue");
+    }
+
+    // Overridden method to show
+    @Override
+    protected void initUI() {
+        tableModel = new DefaultTableModel(new Object[]{"Date", "Time"}, 0);
+        JTable table = new JTable(tableModel);
+
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        setSize(500, 300);
+        setLocation(550, 100); // Positioned to the right of customer view
+    }
+
+    public void refreshTable() {
+    tableModel.setRowCount(0);
+        for (Appointment a : appointments) {
+            tableModel.addRow(new Object[]{a.date, a.getFormattedTime()});
+        }
     }
 }
