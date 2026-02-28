@@ -21,6 +21,9 @@ public class EmployeeDashboard extends JFrame {
     protected JSpinner durationSpinner;
     protected int appointmentDurationMinutes = 15; // default
 
+    // optional link to customer dashboard for notifications
+    private CustomerDashboard customerView;
+
     public EmployeeDashboard(ArrayList<Appointment> list, String title) {
         super(title);
         this.appointments = list;
@@ -67,10 +70,22 @@ public class EmployeeDashboard extends JFrame {
         Appointment next = appointments.remove(0);
         refreshTable();
         JOptionPane.showMessageDialog(this, "Now Serving: " + next.name);
+
+        // inform customer view if available
+        if (customerView != null) {
+            customerView.notifyNowServing(next.name);
+        }
     }
 
     public int getAppointmentDurationMinutes() {
         return appointmentDurationMinutes;
+    }
+
+    /**
+     * Set the customer dashboard to send notifications to.
+     */
+    public void setCustomerView(CustomerDashboard view) {
+        this.customerView = view;
     }
 }
 
