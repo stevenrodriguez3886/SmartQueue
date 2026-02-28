@@ -33,6 +33,8 @@ public class CustomerDashboard extends JFrame {
         super("Customer Booking Station");
         this.appointments = list;
         this.staffView = staff;
+        // register ourselves so the employee dashboard can notify
+        staff.setCustomerView(this);
         this.custWaitListView = new restrictedView(appointments); // Initialize the restricted view with the shared list
         initUI(list);
     }
@@ -210,6 +212,13 @@ public class CustomerDashboard extends JFrame {
             // Create new instance of the EmployeeDashboard with restricted view and functionality
             custWaitListView.setVisible(true);
         }
+    }
+
+    /**
+     * Display a notification when the employee dashboard begins serving a customer.
+     */
+    public void notifyNowServing(String name) {
+        JOptionPane.showMessageDialog(this, "Now Serving: " + name);
     }
 
     private void showError(String message) {
