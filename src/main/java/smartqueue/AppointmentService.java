@@ -47,6 +47,16 @@ public class AppointmentService {
         }
         return waitCount;
     }
+    public int getPosition(String name, String date, int hour) {
+        for (int i = 0; i < appointments.size(); i++) {
+            Appointment a = appointments.get(i);
+            // Match the specific appointment details
+            if (a.name.equalsIgnoreCase(name) && a.date.equals(date) && a.hour == hour) {
+                return i; // Returns the number of people ahead of them
+            }
+        }
+        return -1; // Returns -1 if the appointment isn't found
+    }
 
     public int getDuration() {
         return appointmentDurationMinutes;

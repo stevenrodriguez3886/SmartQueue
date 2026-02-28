@@ -19,11 +19,9 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Disabled to allow JavaScript fetch requests to work
             .authorizeHttpRequests(auth -> auth
-                // Allow anyone to see the website files and use the customer API
-                .requestMatchers("/", "/index.html", "/bookAppointment.js", "/api/customer/**").permitAll()
-                // Require a login for any employee dashboard actions
-                .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
-                .anyRequest().authenticated()
+            .requestMatchers("/", "/index.html", "/bookAppointment.js", "/api/customer/**", "/ws/**").permitAll() // Added /ws/**
+            .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
+            .anyRequest().authenticated()
             )
             .formLogin(login -> login.permitAll()) // Provides the "Please sign in" page
             .logout(logout -> logout.permitAll());

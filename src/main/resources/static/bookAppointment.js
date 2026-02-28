@@ -19,9 +19,21 @@ async function bookAppointment() {
             body: JSON.stringify(appointmentRequest)
         });
 
-        const responseText = await response.text();
-        statusMessage.textContent = responseText;
-        statusMessage.style.color = response.ok ? 'green' : 'red';
+        if (response.ok) {
+            const bookedApp = await response.json(); // Get the Appointment object back
+            const myId = bookedApp.id; 
+            statusMessage.textContent = "Booked! Waiting for your turn...";
+            statusMessage.style.color = 'green';
+            
+            // Connect to WebSocket using this unique ID
+            var socket = new SockJS('/ws');
+            var stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                stompClient.subscribe('/topic/notify/' + myId, function (message) {
+                    alert(message.body); // Only this specific browser gets the alert
+                });
+            });
+        }
         
     } catch (error) {
         statusMessage.textContent = 'Network error.';
@@ -65,19 +77,25 @@ async function showWaitTime() {
 }
 
 async function showPositionInQueue() {
-    const queueTableBody = document.getElementById('queueTableBody');
+    const nameInput = document.getElementById('name').value;
+    const dateInput = document.getElementById('date').value;
+    const hourInput = parseInt(document.getElementById('hour').value, 10);
+    const statusMessage = document.getElementById('statusMessage');
+
     try {
-        const response = await fetch('/api/customer/queue');
-        if (response.ok) {
-            const appointments = await response.json();
-            queueTableBody.innerHTML = ''; 
-            appointments.forEach(app => {
-                const row = `<tr><td>${app.date}</td><td>${app.hour}:00</td></tr>`;
-                queueTableBody.innerHTML += row;
-            });
-            document.getElementById('queueContainer').style.display = 'block';
-        }
+        // Fetch the position using the specific customer's details
+        const response = await fetch(`/api/customer/position?name=${nameInput}&date=${dateInput}&hour=${hourInput}`);
+        const responseText = await response.text();
+
+        // Update the UI
+        statusMessage.textContent = responseText;
+        statusMessage.style.color = response.ok ? 'blue' : 'red';
+        
+        // Hide the old table container since we are using a text message now
+        document.getElementById('queueContainer').style.display = 'none';
+        
     } catch (error) {
-        console.error("Queue error");
+        statusMessage.textContent = 'Network error.';
+        statusMessage.style.color = 'red';
     }
 }

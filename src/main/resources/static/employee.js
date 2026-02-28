@@ -1,3 +1,15 @@
+// Connect to the WebSocket for live updates
+var socket = new SockJS('/ws');
+var stompClient = Stomp.over(socket);
+
+stompClient.connect({}, function (frame) {
+    // Listen to the public update channel
+    stompClient.subscribe('/topic/queue-update', function (message) {
+        // Automatically fetch the newest list whenever anyone books, cancels, or is served
+        loadFullQueue(); 
+    });
+});
+
 // Attach event listeners to the buttons in employee.html
 document.getElementById('refreshButton').addEventListener('click', loadFullQueue);
 document.getElementById('serveButton').addEventListener('click', serveNextCustomer);

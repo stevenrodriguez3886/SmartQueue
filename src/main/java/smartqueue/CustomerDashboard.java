@@ -1,6 +1,7 @@
 package smartqueue;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -14,13 +15,15 @@ public class CustomerDashboard {
     private final AppointmentService appointmentService;
     private static final int OPEN_HOUR = 9;
     private static final int CLOSE_HOUR = 17;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public CustomerDashboard(AppointmentService appointmentService) {
+    public CustomerDashboard(AppointmentService appointmentService, SimpMessagingTemplate messagingTemplate) {
         this.appointmentService = appointmentService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping("/book")
-    public ResponseEntity<String> book(@RequestBody AppointmentRequest request) {
+    public ResponseEntity<Object> book(@RequestBody AppointmentRequest request) {
         String name = request.getName();
         String date = request.getDate();
         int hour = request.getHour();
@@ -69,14 +72,23 @@ public class CustomerDashboard {
             }
         }
 
-        appointmentService.add(new Appointment(name, date, hour));
-        return ResponseEntity.ok("Appointment Booked!");
+        Appointment newAppointment = new Appointment(name, date, hour);
+        appointmentService.add(newAppointment);
+
+        // Broadcast that the queue changed
+        messagingTemplate.convertAndSend("/topic/queue-update", "Refresh");
+
+        return ResponseEntity.ok(newAppointment);
     }
 
     @DeleteMapping("/cancel")
     public ResponseEntity<String> cancel(@RequestBody AppointmentRequest request) {
         boolean removed = appointmentService.removeSpecific(request.getName(), request.getDate(), request.getHour());
-        if (removed) return ResponseEntity.ok("Appointment successfully canceled.");
+        if (removed){
+            // Broadcast that the queue changed
+            messagingTemplate.convertAndSend("/topic/queue-update", "Refresh");
+            return ResponseEntity.ok("Appointment cancelled successfully.");
+        }
         return ResponseEntity.badRequest().body("No matching appointment found.");
     }
 
@@ -87,8 +99,17 @@ public class CustomerDashboard {
         return ResponseEntity.ok("Estimated Wait: " + totalWait + " minutes. " + waitCount + " people ahead of you.");
     }
 
-    @GetMapping("/queue")
-    public List<Appointment> getQueue() {
-        return appointmentService.getAll();
+    @GetMapping("/position")
+    public ResponseEntity<String> getPosition(@RequestParam String name, @RequestParam String date, @RequestParam int hour) {
+        int pos = appointmentService.getPosition(name, date, hour);
+        
+        if (pos == -1) {
+            return ResponseEntity.badRequest().body("Appointment not found. Please check your details.");
+        }
+        if (pos == 0) {
+            return ResponseEntity.ok("You are next!");
+        }
+        
+        return ResponseEntity.ok("There are " + pos + " people ahead of you.");
     }
 }
