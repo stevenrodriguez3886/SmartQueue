@@ -1,12 +1,25 @@
 package smartqueue;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import java.util.UUID;
 
+@Entity // Tells Hibernate to create a database table for this class
 public class Appointment {
-    String name;
-    String date;
-    int hour;
+    @Id
     public String id;
+    public String name;
+    
+    // date and hour reserved SQL keywords, so we need to specify the column names explicitly.
+    // easier to make this change here than to change the variable names everywhere else in the codebase.
+    @Column(name = "appointment_date") 
+    public String date;
+    @Column(name = "appointment_hour")
+    public int hour;
+
+    // Default constructor is REQUIRED for JPA
+    public Appointment() {}
 
     public Appointment(String name, String date, int hour) {
         this.name = name;

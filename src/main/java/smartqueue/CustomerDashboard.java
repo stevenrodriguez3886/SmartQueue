@@ -83,11 +83,10 @@ public class CustomerDashboard {
 
     @DeleteMapping("/cancel")
     public ResponseEntity<String> cancel(@RequestBody AppointmentRequest request) {
-        boolean removed = appointmentService.removeSpecific(request.getName(), request.getDate(), request.getHour());
-        if (removed){
-            // Broadcast that the queue changed
+        boolean removed = appointmentService.removeSpecific(request.getId());
+        if (removed) {
             messagingTemplate.convertAndSend("/topic/queue-update", "Refresh");
-            return ResponseEntity.ok("Appointment cancelled successfully.");
+            return ResponseEntity.ok("Appointment successfully canceled.");
         }
         return ResponseEntity.badRequest().body("No matching appointment found.");
     }
@@ -100,16 +99,14 @@ public class CustomerDashboard {
     }
 
     @GetMapping("/position")
-    public ResponseEntity<String> getPosition(@RequestParam String name, @RequestParam String date, @RequestParam int hour) {
-        int pos = appointmentService.getPosition(name, date, hour);
-        
+    public ResponseEntity<String> getPosition(@RequestParam String id) {
+        int pos = appointmentService.getPosition(id);
         if (pos == -1) {
-            return ResponseEntity.badRequest().body("Appointment not found. Please check your details.");
+            return ResponseEntity.badRequest().body("Appointment not found. Did you cancel it?");
         }
         if (pos == 0) {
             return ResponseEntity.ok("You are next!");
         }
-        
         return ResponseEntity.ok("There are " + pos + " people ahead of you.");
     }
 }
