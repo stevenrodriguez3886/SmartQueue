@@ -10,10 +10,14 @@ document.getElementById('waitTimeButton').addEventListener('click', showWaitTime
 document.getElementById('positionButton').addEventListener('click', showPositionInQueue);
 
 /**
- * @brief Automatically attempts to reconnect to WebSocket notifications on page load.
+ * @brief Automatically runs on page load. Fetches valid hours and reconnects to notifications.
  * Checks the browser's sessionStorage to see if the user has an active appointment.
  */
 window.onload = function() {
+    // 1. Fetch the dynamic hours from the server so the user only sees valid times
+    fetchAvailableHours();
+    
+    // 2. Reconnect notifications if they have a saved session
     const savedId = sessionStorage.getItem('appointmentId');
     if (savedId) {
         connectToNotifications(savedId);
@@ -21,7 +25,34 @@ window.onload = function() {
 };
 
 /**
- * @brief Establishes a WebSocket connection to listen for targeted notifications.
+ * @brief Retrieves the live service hours from the backend and populates the hour dropdown.
+ * Ensures customers can only select active slots from the UI.
+ * @async
+ */
+async function fetchAvailableHours() {
+    try {
+        const response = await fetch('/api/customer/hours');
+        if (response.ok) {
+            const data = await response.json();
+            const hourSelect = document.getElementById('hour');
+            hourSelect.innerHTML = ''; // Clear out any existing options before repopulating
+
+            // Loop from Open Hour to Close Hour and build the options list
+            for (let h = data.openHour; h < data.closeHour; h++) {
+                const option = document.createElement('option');
+                option.value = h;
+                // Formats numbers less than 10 to have a leading zero (e.g., 09:00 instead of 9:00)
+                option.textContent = h < 10 ? `0${h}:00` : `${h}:00`;
+                hourSelect.appendChild(option);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load active service hours:', error);
+    }
+}
+
+/**
+ * @brief Establishes a WebSocket connection to listen for targeted notifications and queue updates.
  * @param {string} id The unique UUID of the customer's appointment.
  */
 function connectToNotifications(id) {
@@ -33,6 +64,11 @@ function connectToNotifications(id) {
         // Subscribe to a unique topic specific to this user's ID
         stompClient.subscribe('/topic/notify/' + id, function (message) {
             alert(message.body); // Alerts the user when the employee clicks "Serve Next"
+        });
+
+        // Listen for global queue updates to redraw the hours if an admin changes them live
+        stompClient.subscribe('/topic/queue-update', function (message) {
+            fetchAvailableHours(); 
         });
     });
 }

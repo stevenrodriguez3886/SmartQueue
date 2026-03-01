@@ -16,6 +16,12 @@ public class AppointmentService {
     /** @brief Expected duration of an appointment in minutes (kept in memory for the active session). */
     private int appointmentDurationMinutes = 15; 
 
+    /** @brief The hour the service opens (24-hour format, kept in memory). */
+    private int openHour = 9; // Default 09:00
+
+    /** @brief The hour the service closes (24-hour format, kept in memory). */
+    private int closeHour = 17; // Default 17:00 (5:00 PM)
+
     /**
      * @brief Constructor for dependency injection.
      * @param database The repository to interact with the database.
@@ -121,5 +127,39 @@ public class AppointmentService {
      */
     public void setDuration(int duration) {
         this.appointmentDurationMinutes = duration;
+    }
+
+    // --- Dynamic Service Hours Getters and Setters ---
+
+    /**
+     * @brief Gets the currently configured opening hour.
+     * @return The opening hour in 24h format.
+     */
+    public int getOpenHour() { 
+        return openHour; 
+    }
+
+    /**
+     * @brief Sets the daily opening hour for the business.
+     * @param openHour The new opening hour to set (0-23).
+     */
+    public void setOpenHour(int openHour) { 
+        this.openHour = openHour; 
+    }
+
+    /**
+     * @brief Gets the currently configured closing hour.
+     * @return The closing hour in 24h format.
+     */
+    public int getCloseHour() { 
+        return closeHour; 
+    }
+
+    /**
+     * @brief Sets the daily closing hour for the business.
+     * @param closeHour The new closing hour to set (1-24).
+     */
+    public void setCloseHour(int closeHour) { 
+        this.closeHour = closeHour; 
     }
 }

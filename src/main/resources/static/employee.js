@@ -21,6 +21,8 @@ stompClient.connect({}, function (frame) {
 document.getElementById('refreshButton').addEventListener('click', loadFullQueue);
 document.getElementById('serveButton').addEventListener('click', serveNextCustomer);
 document.getElementById('updateDurationButton').addEventListener('click', updateDuration);
+// NEW listener for the hours button
+document.getElementById('updateHoursButton').addEventListener('click', updateServiceHours);
 
 // Load the queue immediately when the page finishes loading
 window.onload = loadFullQueue;
@@ -112,6 +114,35 @@ async function updateDuration() {
         } else {
             statusSpan.style.color = '#c0392b';
             statusSpan.textContent = '✕ Update failed';
+        }
+    } catch (error) {
+        statusSpan.textContent = 'Connection error';
+    }
+}
+
+/**
+ * @brief Updates the global service hours allowing/restricting customer bookings.
+ * @async
+ */
+async function updateServiceHours() {
+    const openHour = document.getElementById('openHourInput').value;
+    const closeHour = document.getElementById('closeHourInput').value;
+    const statusSpan = document.getElementById('hoursStatus');
+
+    try {
+        // Calls the new @PostMapping("/hours") in EmployeeDashboard.java
+        const response = await fetch(`/api/employee/hours?openHour=${openHour}&closeHour=${closeHour}`, { 
+            method: 'POST' 
+        });
+        const resultText = await response.text();
+
+        if (response.ok) {
+            statusSpan.style.color = '#27ae60';
+            statusSpan.textContent = `✓ ${resultText}`;
+            setTimeout(() => { statusSpan.textContent = ''; }, 4000);
+        } else {
+            statusSpan.style.color = '#c0392b';
+            statusSpan.textContent = `✕ ${resultText}`; // Shows validation error (e.g. Open must be before Close)
         }
     } catch (error) {
         statusSpan.textContent = 'Connection error';

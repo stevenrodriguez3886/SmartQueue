@@ -7,6 +7,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @brief REST Controller handling all customer-facing API endpoints.
@@ -19,9 +20,6 @@ public class CustomerDashboard {
 
     private final AppointmentService appointmentService;
     private final SimpMessagingTemplate messagingTemplate;
-    
-    private static final int OPEN_HOUR = 9;  // 09:00 AM
-    private static final int CLOSE_HOUR = 17; // 05:00 PM (17:00)
 
     /**
      * @brief Constructor for dependency injection.
@@ -31,6 +29,18 @@ public class CustomerDashboard {
     public CustomerDashboard(AppointmentService appointmentService, SimpMessagingTemplate messagingTemplate) {
         this.appointmentService = appointmentService;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    /**
+     * @brief Retrieves the current dynamic business hours so the frontend can populate the dropdown.
+     * @return A map containing the openHour and closeHour.
+     */
+    @GetMapping("/hours")
+    public ResponseEntity<Map<String, Integer>> getHours() {
+        return ResponseEntity.ok(Map.of(
+            "openHour", appointmentService.getOpenHour(), 
+            "closeHour", appointmentService.getCloseHour()
+        ));
     }
 
     /**
@@ -74,9 +84,11 @@ public class CustomerDashboard {
             return ResponseEntity.badRequest().body("Appointments cannot be scheduled on weekends.");
         }
 
-        // Validation 5: Ensure time falls within business hours
-        if (hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
-            return ResponseEntity.badRequest().body("Choose a time between 09:00 and 16:00.");
+        // Validation 5: Dynamically checking within business hours
+        int openHour = appointmentService.getOpenHour();
+        int closeHour = appointmentService.getCloseHour();
+        if (hour < openHour || hour >= closeHour) {
+            return ResponseEntity.badRequest().body("Choose a time between " + openHour + ":00 and " + (closeHour - 1) + ":00.");
         }
 
         // Validation 6: Check database to prevent double bookings
