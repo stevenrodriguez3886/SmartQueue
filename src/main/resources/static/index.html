@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Booking Station</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
     <style>
+        /* Basic grid layout for the booking form */
         .grid-container {
             display: grid;
             grid-template-columns: 200px 200px;
@@ -36,16 +39,7 @@
         <input type="date" id="date" required>
         
         <label for="hour">Start Hour:</label>
-        <select id="hour">
-            <option value="9">09:00</option>
-            <option value="10">10:00</option>
-            <option value="11">11:00</option>
-            <option value="12">12:00</option>
-            <option value="13">13:00</option>
-            <option value="14">14:00</option>
-            <option value="15">15:00</option>
-            <option value="16">16:00</option>
-        </select>
+        <select id="hour"></select>
 
         <button id="waitTimeButton">View Estimated Wait Time</button>
         <button id="bookButton">Book Appointment</button>
@@ -55,21 +49,7 @@
     </div>
 
     <p id="statusMessage" style="font-weight: bold;"></p>
-
-    <div id="queueContainer" style="display: none;">
-        <h3>Your Position in Queue</h3>
-        <table id="queueTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody id="queueTableBody">
-                </tbody>
-        </table>
-    </div>
-
+    
     <script src="bookAppointment.js"></script>
 </body>
 </html>

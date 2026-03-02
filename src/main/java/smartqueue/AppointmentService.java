@@ -1,68 +1,165 @@
 package smartqueue;
 
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
+/**
+ * @brief Service class containing the core business logic for the SmartQueue application.
+ * * Acts as an intermediary between the REST controllers and the database layer.
+ */
 @Service
 public class AppointmentService {
-    // This replaces the shared ArrayList from the original main method
-    private final List<Appointment> appointments = new ArrayList<>();
-    private int appointmentDurationMinutes = 15; // Default
+    
+    /** @brief Dependency-injected database repository. */
+    private final AppointmentDatabase database;
+    
+    /** @brief Expected duration of an appointment in minutes (kept in memory for the active session). */
+    private int appointmentDurationMinutes = 15; 
 
+    /** @brief The hour the service opens (24-hour format, kept in memory). */
+    private int openHour = 9; // Default 09:00
+
+    /** @brief The hour the service closes (24-hour format, kept in memory). */
+    private int closeHour = 17; // Default 17:00 (5:00 PM)
+
+    /**
+     * @brief Constructor for dependency injection.
+     * @param database The repository to interact with the database.
+     */
+    public AppointmentService(AppointmentDatabase database) {
+        this.database = database;
+    }
+
+    /**
+     * @brief Adds a new appointment to the database.
+     * @param a The Appointment object to save.
+     */
     public void add(Appointment a) {
-        appointments.add(a);
-        // Core Logic: Keep the list sorted chronologically
-        appointments.sort(Comparator.comparing((Appointment app) -> app.date)
-                .thenComparingInt(app -> app.hour));
+        // Saves to the underlying database (e.g., H2 file/memory database)
+        database.save(a); 
     }
 
+    /**
+     * @brief Retrieves all scheduled appointments in chronological order.
+     * @return A sorted List of Appointments.
+     */
     public List<Appointment> getAll() {
-        return appointments;
+        // Retrieves the sorted list directly using our custom JPA repository method
+        return database.findAllByOrderByDateAscHourAsc();
     }
 
-    public boolean removeSpecific(String name, String date, int hour) {
-        // Core Logic: Used for the "Cancel" feature
-        return appointments.removeIf(a -> 
-            a.name.equalsIgnoreCase(name) && 
-            a.date.equals(date) && 
-            a.hour == hour
-        );
+    /**
+     * @brief Removes a specific appointment by its UUID.
+     * @param id The UUID of the appointment to cancel.
+     * @return True if the appointment was found and removed, false otherwise.
+     */
+    public boolean removeSpecific(String id) {
+        // Built-in JPA method to check if the ID exists to prevent errors
+        if (database.existsById(id)) {
+            database.deleteById(id); // Built-in JPA deletion
+            return true;
+        }
+        return false;
     }
 
+    /**
+     * @brief Removes the next appointment in the queue and returns it (used by employees).
+     * @return The next Appointment to be served, or null if the queue is empty.
+     */
     public Appointment removeNext() {
-        if (appointments.isEmpty()) return null;
-        // Core Logic: "Serve" the first person in the sorted queue
-        return appointments.remove(0);
+        List<Appointment> all = getAll();
+        if (all.isEmpty()) return null;
+        
+        // Grab the first person, delete them from the database, and return their data
+        Appointment next = all.get(0);
+        database.delete(next);
+        return next;
     }
 
+    /**
+     * @brief Calculates how many people are ahead of a specific time slot on a given date.
+     * @param date The date to check.
+     * @param hour The hour to check.
+     * @return The number of appointments scheduled before the given hour on the given date.
+     */
     public int getWaitCount(String date, int hour) {
         int waitCount = 0;
-        for (Appointment a : appointments) {
-            // Core Logic: Calculate how many people are ahead on the same day
+        List<Appointment> all = getAll();
+        
+        // Iterate through all appointments and count those on the same day but earlier in the day
+        for (Appointment a : all) {
             if (a.date.equals(date) && a.hour < hour) {
                 waitCount++;
             }
         }
         return waitCount;
     }
-    public int getPosition(String name, String date, int hour) {
-        for (int i = 0; i < appointments.size(); i++) {
-            Appointment a = appointments.get(i);
-            // Match the specific appointment details
-            if (a.name.equalsIgnoreCase(name) && a.date.equals(date) && a.hour == hour) {
-                return i; // Returns the number of people ahead of them
+
+    /**
+     * @brief Finds the current position of a specific appointment in the global queue.
+     * @param id The UUID of the appointment.
+     * @return The 0-based index position in the queue, or -1 if not found.
+     */
+    public int getPosition(String id) {
+        List<Appointment> all = getAll();
+        for (int i = 0; i < all.size(); i++) {
+            Appointment a = all.get(i);
+            // Look for the exact UUID match instead of checking name, date, and hour
+            // This is safer and guarantees we find the exact right person.
+            if (a.id.equals(id)) {
+                return i;
             }
         }
-        return -1; // Returns -1 if the appointment isn't found
+        return -1; // Appointment was likely canceled or already served
     }
 
+    /**
+     * @brief Gets the currently configured appointment duration.
+     * @return Duration in minutes.
+     */
     public int getDuration() {
         return appointmentDurationMinutes;
     }
 
+    /**
+     * @brief Sets the expected appointment duration.
+     * @param duration The new duration in minutes.
+     */
     public void setDuration(int duration) {
         this.appointmentDurationMinutes = duration;
+    }
+
+    // --- Dynamic Service Hours Getters and Setters ---
+
+    /**
+     * @brief Gets the currently configured opening hour.
+     * @return The opening hour in 24h format.
+     */
+    public int getOpenHour() { 
+        return openHour; 
+    }
+
+    /**
+     * @brief Sets the daily opening hour for the business.
+     * @param openHour The new opening hour to set (0-23).
+     */
+    public void setOpenHour(int openHour) { 
+        this.openHour = openHour; 
+    }
+
+    /**
+     * @brief Gets the currently configured closing hour.
+     * @return The closing hour in 24h format.
+     */
+    public int getCloseHour() { 
+        return closeHour; 
+    }
+
+    /**
+     * @brief Sets the daily closing hour for the business.
+     * @param closeHour The new closing hour to set (1-24).
+     */
+    public void setCloseHour(int closeHour) { 
+        this.closeHour = closeHour; 
     }
 }
