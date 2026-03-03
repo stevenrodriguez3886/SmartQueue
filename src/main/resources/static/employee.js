@@ -23,6 +23,8 @@ document.getElementById('serveButton').addEventListener('click', serveNextCustom
 document.getElementById('updateDurationButton').addEventListener('click', updateDuration);
 // NEW listener for the hours button
 document.getElementById('updateHoursButton').addEventListener('click', updateServiceHours);
+// listener for wait-report button
+document.getElementById('generateReportButton').addEventListener('click', generateReport);
 
 // Load the queue immediately when the page finishes loading
 window.onload = loadFullQueue;
@@ -117,6 +119,56 @@ async function updateDuration() {
         }
     } catch (error) {
         statusSpan.textContent = 'Connection error';
+    }
+}
+
+/**
+ * @brief Requests a wait-time report from the server for the given date range
+ * and displays the results in CSV format.
+ * @async
+ */
+async function generateReport() {
+    const start = document.getElementById('startDateInput').value;
+    const end = document.getElementById('endDateInput').value;
+    const statusDiv = document.getElementById('reportStatus');
+    const outputPre = document.getElementById('reportOutput');
+
+    // simple validation
+    if (!start || !end) {
+        statusDiv.style.color = '#c0392b';
+        statusDiv.textContent = 'Please pick both start and end dates.';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/employee/wait-report?start=${start}&end=${end}`);
+        if (response.ok) {
+            const report = await response.json();
+            if (report.length === 0) {
+                outputPre.textContent = 'No appointments in range.';
+                document.getElementById('downloadCsv').style.display = 'none';
+            } else {
+                let csv = 'Date,Hour,WaitCount,WaitMinutes\n';
+                report.forEach(r => {
+                    csv += `${r.date},${r.hour},${r.waitCount},${r.waitMinutes}\n`;
+                });
+                outputPre.textContent = csv;
+                // create blob and show download link
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.getElementById('downloadCsv');
+                link.href = url;
+                link.style.display = 'block';
+            }
+            statusDiv.style.color = '#27ae60';
+            statusDiv.textContent = 'Report generated.';
+        } else {
+            statusDiv.style.color = '#c0392b';
+            statusDiv.textContent = 'Failed to fetch report';
+        }
+    } catch (error) {
+        statusDiv.style.color = '#c0392b';
+        statusDiv.textContent = 'Network error';
     }
 }
 

@@ -87,4 +87,22 @@ public class EmployeeDashboard {
         
         return ResponseEntity.ok("Hours updated: " + openHour + ":00 to " + closeHour + ":00");
     }
+
+    /**
+     * @brief Generates a wait-time report for a specified inclusive date range.
+     *
+     * Staff can request this from the employee dashboard; the frontend will
+     * supply start and end dates and receive an array of {@link WaitReportEntry}
+     * objects to display or export.
+     *
+     * @param start Starting date in yyyy-MM-dd format
+     * @param end   Ending date in yyyy-MM-dd format
+     * @return List of wait-time report entries
+     */
+    @GetMapping("/wait-report")
+    public java.util.List<WaitReportEntry> getWaitReport(
+            @RequestParam String start,
+            @RequestParam String end) {
+        return appointmentService.getWaitReport(start, end);
+    }
 }
