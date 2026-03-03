@@ -127,6 +127,20 @@
             <span id="hoursStatus"></span>
         </div>
     </div>
+    
+    <div class="section-card">
+        <h3>Wait-Time Report</h3>
+        <div class="input-group">
+            <label for="startDateInput">Start Date:</label>
+            <input type="date" id="startDateInput">
+            <label for="endDateInput">End Date:</label>
+            <input type="date" id="endDateInput">
+            <button id="generateReportButton">Generate Report</button>
+        </div>
+        <div id="reportStatus"></div>
+        <pre id="reportOutput" style="background:white; padding:10px; border:1px solid #ccc; border-radius:4px; max-height:200px; overflow:auto;"></pre>
+        <a id="downloadCsv" href="#" download="wait-report.csv" style="display:none; margin-top:8px; display:block;">Download CSV</a>
+    </div>
 
     <div class="section-card">
         <h3>Live Appointment Queue</h3>

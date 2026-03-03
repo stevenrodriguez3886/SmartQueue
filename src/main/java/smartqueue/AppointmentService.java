@@ -122,6 +122,32 @@ public class AppointmentService {
     }
 
     /**
+     * @brief Produces a list of wait-time entries for all appointments whose dates fall
+     * between the provided start and end (inclusive).
+     *
+     * The wait count is computed in the same way the customer-facing API does – by
+     * counting how many slots occur earlier on the same day – and then multiplied by
+     * the current duration to give a minute-based estimate. The frontend will use this
+     * to generate CSV reports or tables.
+     *
+     * @param startDate Lower bound of the date filter (format yyyy-MM-dd).
+     * @param endDate   Upper bound of the date filter (format yyyy-MM-dd).
+     * @return A list of {@link WaitReportEntry} objects sorted chronologically.
+     */
+    public java.util.List<WaitReportEntry> getWaitReport(String startDate, String endDate) {
+        java.util.List<WaitReportEntry> report = new java.util.ArrayList<>();
+        for (Appointment a : getAll()) {
+            // String comparison works for ISO-8601 date format
+            if (a.date.compareTo(startDate) >= 0 && a.date.compareTo(endDate) <= 0) {
+                int waitCount = getWaitCount(a.date, a.hour);
+                int waitMinutes = waitCount * appointmentDurationMinutes;
+                report.add(new WaitReportEntry(a.date, a.hour, waitCount, waitMinutes));
+            }
+        }
+        return report;
+    }
+
+    /**
      * @brief Sets the expected appointment duration.
      * @param duration The new duration in minutes.
      */
